@@ -23,6 +23,9 @@ from typing import Any
 
 import rclpy
 from geometry_msgs.msg import Twist, TwistStamped
+from nav_msgs.msg import Odometry
+from control_msgs.msg import MultiDOFCommand
+from tf_transformations import euler_from_quaternion
 from rclpy.node import Node
 from rclpy.qos import (
     QoSDurabilityPolicy,
@@ -163,6 +166,49 @@ class MobileTwistStampedToMaritimeTwist(MobileToMaritime):
         self.out_pub.publish(maritime_twist)
 
 
+class MobileOdometryToMultiDofCommand(MobileToMaritime):
+    def __init__(self) -> None:
+        super().__init__(
+            Odometry,
+            "mobile_twist_stamped_to_multi_dof_state_stamped",
+            out_message_type=MultiDOFCommand,
+        )
+
+    def in_callback(self, msg: Odometry) -> None:
+        dof_state = MultiDOFCommand()
+
+        dof_state.dof_names = ["x", "y", "z", "rx", "rz", "rz"]
+
+        # Quaternion to RPY
+        pose_quat = [
+            msg.pose.pose.orientation.x,
+            msg.pose.pose.orientation.y,
+            msg.pose.pose.orientation.z,
+            msg.pose.pose.orientation.w,
+        ]
+        (roll, pitch, yaw) = euler_from_quaternion(pose_quat)
+
+        dof_state.values = [
+            msg.pose.pose.position.x,
+            -msg.pose.pose.position.y,
+            -msg.pose.pose.position.z,
+            roll,
+            -pitch,
+            -yaw,
+        ]
+
+        dof_state.values_dot = [
+            msg.twist.twist.linear.x,
+            -msg.twist.twist.linear.y,
+            -msg.twist.twist.linear.z,
+            msg.twist.twist.angular.x,
+            -msg.twist.twist.angular.y,
+            -msg.twist.twist.angular.z,
+        ]
+
+        self.out_pub.publish(dof_state)
+
+
 def main_mobile_twist_to_maritime_twist(args: list[str] | None = None):
     rclpy.init(args=args)
 
@@ -187,6 +233,16 @@ def main_mobile_twist_stamped_to_maritime_twist(args: list[str] | None = None):
     rclpy.init(args=args)
 
     node = MobileTwistStampedToMaritimeTwist()
+    rclpy.spin(node)
+
+    node.destroy_node()
+    rclpy.shutdown()
+
+
+def main_mobile_odometry_to_multi_dof_command(args: list[str] | None = None):
+    rclpy.init(args=args)
+
+    node = MobileOdometryToMultiDofCommand()
     rclpy.spin(node)
 
     node.destroy_node()

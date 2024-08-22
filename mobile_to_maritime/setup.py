@@ -28,6 +28,7 @@ setup(
             "mobile_twist_to_maritime_twist = mobile_to_maritime.mobile_to_maritime:main_mobile_twist_to_maritime_twist",  # noqa
             "mobile_twist_stamped_to_maritime_twist_stamped = mobile_to_maritime.mobile_to_maritime:main_mobile_twist_stamped_to_maritime_twist_stamped",  # noqa
             "mobile_twist_stamped_to_maritime_twist = mobile_to_maritime.mobile_to_maritime:main_mobile_twist_stamped_to_maritime_twist",  # noqa
+            "mobile_odometry_to_maritime_multi_dof_command = mobile_to_maritime.mobile_to_maritime:main_mobile_odometry_to_multi_dof_command",  # noqa
         ],
     },
 )
